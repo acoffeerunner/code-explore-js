@@ -1,0 +1,190 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui";
+
+interface Repository {
+  id: string;
+  name: string;
+  status: "indexed" | "indexing" | "pending";
+  lastIndexed?: string;
+}
+
+interface SidebarProps {
+  repositories?: Repository[];
+  currentRepoId?: string;
+}
+
+export default function Sidebar({
+  repositories = [],
+  currentRepoId,
+}: SidebarProps) {
+  const pathname = usePathname();
+
+  const getStatusIcon = (status: Repository["status"]) => {
+    switch (status) {
+      case "indexed":
+        return "code";
+      case "indexing":
+        return "sync";
+      case "pending":
+        return "dataset";
+      default:
+        return "account_tree";
+    }
+  };
+
+  const getStatusText = (repo: Repository) => {
+    switch (repo.status) {
+      case "indexed":
+        return repo.lastIndexed ? `Indexed ${repo.lastIndexed}` : "Indexed";
+      case "indexing":
+        return "Indexing...";
+      case "pending":
+        return "Pending";
+      default:
+        return "";
+    }
+  };
+
+  return (
+    <aside className="w-[320px] flex flex-col border-r border-border-dark bg-[#120b1c] shrink-0 z-20 h-full">
+      {/* Sidebar Header */}
+      <div className="p-4 pb-0 flex flex-col gap-6">
+        {/* Logo */}
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="bg-primary/20 flex items-center justify-center aspect-square rounded-xl size-10 border border-primary/30 text-primary">
+            <span className="material-symbols-outlined text-[24px]">
+              terminal
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-white text-lg font-bold leading-none tracking-tight">
+              CodeExplore
+            </h1>
+            <p className="text-text-muted text-xs font-normal mt-1">
+              RAG Code Analysis
+            </p>
+          </div>
+        </Link>
+
+        {/* New Repo Button */}
+        <Link href="/dashboard">
+          <Button
+            variant="primary"
+            className="w-full shadow-glow"
+            icon={
+              <span className="material-symbols-outlined text-[20px]">add</span>
+            }
+          >
+            New Repository
+          </Button>
+        </Link>
+
+        {/* Search */}
+        <div className="relative group">
+          <input
+            className="w-full bg-surface-dark border border-border-dark text-white text-sm rounded-lg focus:ring-1 focus:ring-primary focus:border-primary block p-2.5 pl-10 placeholder-text-muted transition-all"
+            placeholder="Filter repositories..."
+          />
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <span className="material-symbols-outlined text-text-muted text-[20px]">
+              search
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Repository List */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
+        <p className="text-text-muted text-xs font-bold uppercase tracking-wider px-2 mb-1">
+          Recent
+        </p>
+
+        {repositories.map((repo) => {
+          const isActive = repo.id === currentRepoId;
+          const isIndexing = repo.status === "indexing";
+
+          return (
+            <Link
+              key={repo.id}
+              href={`/repos/${repo.id}/chat`}
+              className={`
+                flex items-center gap-3 p-3 rounded-lg border group text-left w-full transition-all
+                ${
+                  isActive
+                    ? "bg-surface-dark border-primary/50 relative overflow-hidden"
+                    : "border-transparent hover:bg-surface-dark hover:border-border-dark"
+                }
+                ${isIndexing ? "opacity-75" : ""}
+              `}
+            >
+              {isActive && (
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+              )}
+              <div
+                className={`
+                p-1.5 rounded-md flex shrink-0 relative
+                ${
+                  isActive
+                    ? "bg-white/10 text-white"
+                    : "bg-white/5 text-text-muted group-hover:text-white"
+                }
+              `}
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  {getStatusIcon(repo.status)}
+                </span>
+                {isIndexing && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500" />
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col flex-1 min-w-0">
+                <p
+                  className={`text-sm font-medium leading-none truncate transition-colors ${
+                    isActive
+                      ? "text-white"
+                      : "text-text-muted group-hover:text-white"
+                  }`}
+                >
+                  {repo.name}
+                </p>
+                <p
+                  className={`text-xs mt-1 truncate ${
+                    isActive
+                      ? "text-primary"
+                      : isIndexing
+                        ? "text-orange-400"
+                        : "text-text-muted/60"
+                  }`}
+                >
+                  {isActive ? "Active Now" : getStatusText(repo)}
+                </p>
+              </div>
+            </Link>
+          );
+        })}
+
+        {repositories.length === 0 && (
+          <p className="text-text-muted text-sm px-2 py-4 text-center">
+            No repositories yet. Add one to get started.
+          </p>
+        )}
+      </div>
+
+      {/* Sidebar Footer */}
+      <div className="p-4 border-t border-border-dark flex flex-col gap-1">
+        <div className="mt-4 flex items-center gap-3 px-2">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-blue-500 ring-2 ring-surface-dark" />
+          <div className="flex flex-col">
+            <span className="text-white text-sm font-medium">User</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
