@@ -166,13 +166,13 @@ export default function ChatMessage({ message }: ChatMessageProps) {
 
   if (isUser) {
     return (
-      <div className="flex items-end gap-3 justify-end self-end max-w-3xl w-full">
+      <div className="flex items-end gap-2 md:gap-3 justify-end self-end max-w-[85%] md:max-w-3xl w-full">
         <div className="flex flex-col gap-1 items-end w-full">
-          <div className="text-base font-normal leading-relaxed rounded-2xl rounded-tr-sm px-5 py-3.5 bg-primary text-white shadow-lg shadow-purple-900/20">
+          <div className="text-sm md:text-base font-normal leading-relaxed rounded-2xl rounded-tr-sm px-4 md:px-5 py-3 md:py-3.5 bg-primary text-white shadow-lg shadow-purple-900/20">
             {message.content}
           </div>
         </div>
-        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-blue-500 shrink-0 border border-white/10" />
+        <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-gradient-to-tr from-primary to-blue-500 shrink-0 border border-white/10" />
       </div>
     );
   }
@@ -180,15 +180,15 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   const hasSources = message.sources && message.sources.length > 0;
 
   return (
-    <div className="flex items-start gap-4 max-w-4xl w-full self-start">
-      <div className="h-8 w-8 rounded-full bg-[#31204b] flex items-center justify-center shrink-0 border border-border-dark text-primary shadow-glow-sm">
-        <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+    <div className="flex items-start gap-2 md:gap-4 max-w-full md:max-w-4xl w-full self-start">
+      <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-[#31204b] flex items-center justify-center shrink-0 border border-border-dark text-primary shadow-glow-sm">
+        <span className="material-symbols-outlined text-[16px] md:text-[18px]">smart_toy</span>
       </div>
-      <div className="flex flex-col gap-3 w-full">
+      <div className="flex flex-col gap-2 md:gap-3 w-full min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-white text-sm font-bold">CodeExplore AI</span>
+          <span className="text-white text-xs md:text-sm font-bold">CodeExplore AI</span>
         </div>
-        <div className="text-gray-300 text-base leading-relaxed space-y-4">
+        <div className="text-gray-300 text-sm md:text-base leading-relaxed space-y-3 md:space-y-4 overflow-x-auto">
           {renderContent(message.content)}
         </div>
 

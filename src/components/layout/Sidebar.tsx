@@ -16,11 +16,15 @@ interface Repository {
 interface SidebarProps {
   repositories?: Repository[];
   currentRepoId?: string;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 export default function Sidebar({
   repositories = [],
   currentRepoId,
+  isOpen = false,
+  onClose,
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -41,6 +45,24 @@ export default function Sidebar({
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showUserMenu]);
+
+  // Close sidebar on escape key (mobile)
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen && onClose) {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
+  // Handle link click on mobile - close sidebar
+  const handleLinkClick = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
 
   // Get user display info
   const getUserInfo = () => {
@@ -104,11 +126,37 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="w-[320px] flex flex-col border-r border-border-dark bg-[#120b1c] shrink-0 z-20 h-full">
-      {/* Sidebar Header */}
-      <div className="p-4 pb-0 flex flex-col gap-6">
-        {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-3">
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`
+          w-[280px] md:w-[320px] flex flex-col border-r border-border-dark bg-[#120b1c] shrink-0 h-full
+          fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-in-out
+          md:relative md:translate-x-0 md:z-20
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
+        {/* Mobile close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 rounded-lg hover:bg-white/10 text-text-muted hover:text-white transition-colors md:hidden"
+          aria-label="Close sidebar"
+        >
+          <span className="material-symbols-outlined text-[24px]">close</span>
+        </button>
+
+        {/* Sidebar Header */}
+        <div className="p-4 pb-0 flex flex-col gap-6">
+          {/* Logo */}
+          <Link href="/dashboard" className="flex items-center gap-3" onClick={handleLinkClick}>
           <div className="bg-primary/20 flex items-center justify-center aspect-square rounded-xl size-10 border border-primary/30 text-primary">
             <span className="material-symbols-outlined text-[24px]">
               terminal
@@ -125,7 +173,7 @@ export default function Sidebar({
         </Link>
 
         {/* New Repo Button */}
-        <Link href="/dashboard">
+        <Link href="/dashboard" onClick={handleLinkClick}>
           <Button
             variant="primary"
             className="w-full shadow-glow"
@@ -165,6 +213,7 @@ export default function Sidebar({
             <Link
               key={repo.id}
               href={`/repos/${repo.id}/chat`}
+              onClick={handleLinkClick}
               className={`
                 flex items-center gap-3 p-3 rounded-lg border group text-left w-full transition-all
                 ${
@@ -297,5 +346,6 @@ export default function Sidebar({
         </div>
       </div>
     </aside>
+    </>
   );
 }

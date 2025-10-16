@@ -28,6 +28,7 @@ export default function ChatPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isReindexing, setIsReindexing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { messages, isLoading, isLoadingHistory, error, sendMessage } = useChat({
     repoId,
@@ -171,20 +172,33 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background-dark">
-      <Sidebar repositories={sidebarRepos} currentRepoId={repoId} />
+      <Sidebar
+        repositories={sidebarRepos}
+        currentRepoId={repoId}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
       <main className="flex flex-1 flex-col h-full bg-background-dark relative z-10">
         {/* Header */}
-        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark px-6 py-3 bg-[#120b1c]/50 backdrop-blur-sm sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="text-white text-lg font-bold leading-tight tracking-tight flex items-center gap-2">
-                {repository?.name || "Repository"}
+        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark px-3 md:px-6 py-3 bg-[#120b1c]/50 backdrop-blur-sm sticky top-0 z-30">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 -ml-2 rounded-lg hover:bg-white/10 text-text-muted hover:text-white transition-colors md:hidden"
+              aria-label="Open menu"
+            >
+              <span className="material-symbols-outlined text-[24px]">menu</span>
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-white text-base md:text-lg font-bold leading-tight tracking-tight flex items-center gap-2 truncate">
+                <span className="truncate">{repository?.name || "Repository"}</span>
                 {getStatusBadge()}
               </h2>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-1 md:gap-3 shrink-0">
             <Button
               variant="secondary"
               size="sm"
@@ -201,6 +215,7 @@ export default function ChatPage() {
             <Button
               variant="secondary"
               size="sm"
+              className="!px-2 md:!px-3"
               onClick={handleReindex}
               isLoading={isReindexing}
               disabled={isProcessing}
@@ -212,7 +227,7 @@ export default function ChatPage() {
             >
               <span className="hidden lg:inline">Re-index</span>
             </Button>
-            <div className="h-9 w-[1px] bg-border-dark mx-1" />
+            <div className="h-9 w-[1px] bg-border-dark mx-0.5 md:mx-1 hidden sm:block" />
             <Button
               variant="secondary"
               size="sm"

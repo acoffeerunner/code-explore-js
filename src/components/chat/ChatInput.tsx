@@ -40,7 +40,7 @@ export default function ChatInput({
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-background-dark via-background-dark to-transparent z-40">
+    <div className="absolute bottom-0 left-0 right-0 p-3 md:p-6 bg-gradient-to-t from-background-dark via-background-dark to-transparent z-40">
       <div className="max-w-4xl mx-auto w-full relative">
         <form
           onSubmit={handleSubmit}
@@ -52,7 +52,7 @@ export default function ChatInput({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full bg-transparent border-none text-white text-base p-4 min-h-[60px] max-h-[200px] resize-none focus:ring-0 placeholder-text-muted/70"
+            className="w-full bg-transparent border-none text-white text-sm md:text-base p-3 md:p-4 min-h-[52px] md:min-h-[60px] max-h-[200px] resize-none focus:ring-0 placeholder-text-muted/70"
             placeholder={placeholder}
             rows={1}
             disabled={isLoading}
@@ -65,7 +65,7 @@ export default function ChatInput({
               <button
                 type="submit"
                 disabled={!message.trim() || isLoading}
-                className="flex items-center justify-center h-9 w-9 bg-primary hover:bg-primary-dark text-white rounded-lg transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center h-10 w-10 md:h-9 md:w-9 bg-primary hover:bg-primary-dark text-white rounded-lg transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <span className="material-symbols-outlined animate-spin text-[20px]">
@@ -80,7 +80,7 @@ export default function ChatInput({
             </div>
           </div>
         </form>
-        <p className="text-center text-xs text-text-muted mt-2">
+        <p className="text-center text-[10px] md:text-xs text-text-muted mt-2">
           AI can make mistakes. Verify code snippets in the source.
         </p>
       </div>

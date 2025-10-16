@@ -20,6 +20,7 @@ function BranchSelectionContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -125,9 +126,22 @@ function BranchSelectionContent() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      <Sidebar repositories={sidebarRepos} />
+      <Sidebar
+        repositories={sidebarRepos}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background-light dark:bg-background-dark relative">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="absolute top-4 left-4 p-2 rounded-lg bg-surface-dark/80 backdrop-blur-sm border border-border-dark hover:bg-surface-dark text-text-muted hover:text-white transition-colors md:hidden z-20"
+          aria-label="Open menu"
+        >
+          <span className="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2" />
 

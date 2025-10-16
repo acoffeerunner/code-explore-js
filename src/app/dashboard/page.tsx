@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -67,9 +68,22 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background-dark">
-      <Sidebar repositories={sidebarRepos} />
+      <Sidebar
+        repositories={sidebarRepos}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
       <main className="flex-1 flex flex-col relative overflow-hidden bg-background-light dark:bg-background-dark">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="absolute top-4 left-4 p-2 rounded-lg bg-surface-dark/80 backdrop-blur-sm border border-border-dark hover:bg-surface-dark text-text-muted hover:text-white transition-colors md:hidden z-20"
+          aria-label="Open menu"
+        >
+          <span className="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+
         {/* Abstract Background Gradient */}
         <div className="absolute inset-0 pointer-events-none opacity-40 overflow-hidden">
           <div className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-primary/20 blur-[120px]" />
