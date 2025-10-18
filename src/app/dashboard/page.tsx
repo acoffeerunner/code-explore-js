@@ -12,7 +12,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,30 +29,17 @@ export default function DashboardPage() {
   const loadRepositories = async () => {
     try {
       const repos = await api.getRepositories();
-      setRepositories(
-        repos.map((r) => ({
-          ...r,
-          status: r.status as Repository["status"],
-        }))
-      );
+      setRepositories(repos);
     } catch (err) {
       console.error("Failed to load repositories:", err);
     }
   };
 
-  const handleSubmit = async (gitUrl: string) => {
+  const handleSubmit = (gitUrl: string) => {
     setError(null);
-    setIsLoading(true);
-
-    try {
-      const response = await api.createRepository({ git_url: gitUrl });
-      // Navigate to branch selection
-      router.push(`/repos/${response.repository.id}/branches`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add repository");
-    } finally {
-      setIsLoading(false);
-    }
+    // Navigate to branch selection with URL as query param
+    // Repo will be created after branch is selected
+    router.push(`/repos/new/branches?url=${encodeURIComponent(gitUrl)}`);
   };
 
   if (authLoading) {
@@ -72,7 +58,7 @@ export default function DashboardPage() {
 
   const sidebarRepos = repositories.map((r) => ({
     id: r.id,
-    name: r.name,
+    name: r.name || r.url,
     status: r.status,
     lastIndexed: r.indexed_at
       ? new Date(r.indexed_at).toLocaleDateString()
@@ -113,7 +99,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Input Area */}
-          <RepoInput onSubmit={handleSubmit} isLoading={isLoading} />
+          <RepoInput onSubmit={handleSubmit} />
 
           {/* Error Message */}
           {error && (
