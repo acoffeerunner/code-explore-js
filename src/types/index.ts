@@ -5,23 +5,65 @@ export interface User {
   created_at: string;
 }
 
-// Repository types
+// Repository types (matches backend RepoResponse)
 export interface Repository {
   id: string;
-  user_id: string;
-  git_url: string;
-  name: string;
-  default_branch: string;
-  status: "pending" | "indexing" | "indexed" | "failed";
-  indexed_at: string | null;
+  url: string;
+  branch: string;
+  status: "pending" | "cloning" | "indexing" | "ready" | "failed";
+  progress_pct: number;
+  branches_available: string[] | null;
+  error_message: string | null;
+  file_count: number | null;
+  chunk_count: number | null;
+  webhook_url: string | null;
   created_at: string;
   updated_at: string;
+  indexed_at: string | null;
+  // Derived field for display
+  name?: string;
 }
 
+export interface RepoListResponse {
+  items: Repository[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_more: boolean;
+}
+
+// Backend returns branches as simple strings, with default_branch separately
+export interface BranchesResponse {
+  url: string;
+  default_branch: string;
+  branches: string[];
+  is_public: boolean;
+  error?: string;
+}
+
+// Simple branch for UI display
 export interface Branch {
   name: string;
-  sha: string;
   is_default: boolean;
+}
+
+// Source citation from backend RAG response
+export interface SourceCitation {
+  chunk_id: string;
+  file: string;
+  line_start: number;
+  line_end: number;
+  symbol_name: string | null;
+  score: number;
+}
+
+// Mapped source for UI display
+export interface DisplaySource {
+  file_path: string;
+  start_line: number;
+  end_line: number;
+  symbol_name: string | null;
+  score: number;
 }
 
 // Chat types
@@ -30,38 +72,36 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   created_at: string;
-  sources?: CodeSource[];
-}
-
-export interface CodeSource {
-  file_path: string;
-  start_line: number;
-  end_line: number;
-  content: string;
-  score: number;
+  sources?: DisplaySource[];
 }
 
 // API request/response types
 export interface CreateRepoRequest {
-  git_url: string;
-}
-
-export interface CreateRepoResponse {
-  repository: Repository;
-  branches: Branch[];
-}
-
-export interface IndexRepoRequest {
+  url: string;
   branch: string;
+  webhook_url?: string;
 }
+
+// CreateRepoResponse is just a Repository (backend returns RepoResponse directly)
+export type CreateRepoResponse = Repository;
 
 export interface ChatRequest {
-  message: string;
   repo_id: string;
+  question: string;
+  model?: string;
+  top_k?: number;
 }
 
+// Backend ChatResponse structure
 export interface ChatResponse {
-  message: ChatMessage;
+  answer: string;
+  sources: SourceCitation[];
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 // API error type
