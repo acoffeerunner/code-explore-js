@@ -32,12 +32,19 @@ export function useChat({ repoId }: UseChatOptions) {
 
       try {
         const response = await api.chat({
-          message: content.trim(),
+          question: content.trim(),
           repo_id: repoId,
         });
 
         // Add assistant response
-        setMessages((prev) => [...prev, response.message]);
+        const assistantMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: response.answer,
+          created_at: new Date().toISOString(),
+          sources: response.sources,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to send message");
         // Remove the user message on error

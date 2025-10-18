@@ -7,7 +7,7 @@ import { Button } from "@/components/ui";
 interface Repository {
   id: string;
   name: string;
-  status: "indexed" | "indexing" | "pending";
+  status: "pending" | "cloning" | "indexing" | "indexed" | "failed";
   lastIndexed?: string;
 }
 
@@ -28,8 +28,12 @@ export default function Sidebar({
         return "code";
       case "indexing":
         return "sync";
+      case "cloning":
+        return "download";
       case "pending":
         return "dataset";
+      case "failed":
+        return "error";
       default:
         return "account_tree";
     }
@@ -41,8 +45,12 @@ export default function Sidebar({
         return repo.lastIndexed ? `Indexed ${repo.lastIndexed}` : "Indexed";
       case "indexing":
         return "Indexing...";
+      case "cloning":
+        return "Cloning...";
       case "pending":
         return "Pending";
+      case "failed":
+        return "Failed";
       default:
         return "";
     }
@@ -104,7 +112,7 @@ export default function Sidebar({
 
         {repositories.map((repo) => {
           const isActive = repo.id === currentRepoId;
-          const isIndexing = repo.status === "indexing";
+          const isIndexing = repo.status === "indexing" || repo.status === "cloning";
 
           return (
             <Link

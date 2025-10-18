@@ -93,20 +93,15 @@ export default function BranchList({
                     rebase
                   </span>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-base font-medium text-slate-900 dark:text-white">
-                      {branch.name}
-                    </p>
-                    {branch.is_default && (
-                      <Badge variant="primary" size="sm">
-                        Default
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500 mt-0.5 font-mono text-xs">
-                    sha: {branch.sha.substring(0, 7)}
+                <div className="flex items-center gap-2">
+                  <p className="text-base font-medium text-slate-900 dark:text-white">
+                    {branch.name}
                   </p>
+                  {branch.is_default && (
+                    <Badge variant="primary" size="sm">
+                      Default
+                    </Badge>
+                  )}
                 </div>
               </div>
 

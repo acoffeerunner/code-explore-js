@@ -76,7 +76,7 @@ export default function ChatPage() {
 
   const sidebarRepos = repositories.map((r) => ({
     id: r.id,
-    name: r.name,
+    name: r.name || r.url,
     status: r.status,
     lastIndexed: r.indexed_at
       ? new Date(r.indexed_at).toLocaleDateString()
@@ -91,6 +91,8 @@ export default function ChatPage() {
         return <Badge variant="success">Indexed</Badge>;
       case "indexing":
         return <Badge variant="warning">Indexing</Badge>;
+      case "cloning":
+        return <Badge variant="warning">Cloning</Badge>;
       case "pending":
         return <Badge variant="default">Pending</Badge>;
       case "failed":
