@@ -1,13 +1,24 @@
 import type {
   Repository,
-  Branch,
+  RepoListResponse,
+  BranchesResponse,
   CreateRepoRequest,
   CreateRepoResponse,
-  IndexRepoRequest,
   ChatRequest,
   ChatResponse,
   ApiError,
 } from "@/types";
+
+// Helper to extract repo name from URL
+function extractRepoName(url: string): string {
+  try {
+    // Handle GitHub URLs like https://github.com/owner/repo or git@github.com:owner/repo.git
+    const match = url.match(/(?:github\.com[\/:]|gitlab\.com[\/:]|bitbucket\.org[\/:])?([^\/]+\/[^\/]+?)(?:\.git)?$/);
+    return match ? match[1] : url;
+  } catch {
+    return url;
+  }
+}
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -50,25 +61,31 @@ class ApiClient {
 
   // Repository endpoints
   async createRepository(data: CreateRepoRequest): Promise<CreateRepoResponse> {
-    return this.request<CreateRepoResponse>("/repos", {
+    const repo = await this.request<CreateRepoResponse>("/repos", {
       method: "POST",
       body: JSON.stringify(data),
     });
+    return {
+      ...repo,
+      name: extractRepoName(repo.url),
+    };
   }
 
   async getRepositories(): Promise<Repository[]> {
-    return this.request<Repository[]>("/repos");
+    const response = await this.request<RepoListResponse>("/repos");
+    // Add derived name field from URL
+    return response.items.map((repo) => ({
+      ...repo,
+      name: extractRepoName(repo.url),
+    }));
   }
 
   async getRepository(id: string): Promise<Repository> {
-    return this.request<Repository>(`/repos/${id}`);
-  }
-
-  async indexRepository(id: string, data: IndexRepoRequest): Promise<void> {
-    return this.request<void>(`/repos/${id}/index`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    const repo = await this.request<Repository>(`/repos/${id}`);
+    return {
+      ...repo,
+      name: extractRepoName(repo.url),
+    };
   }
 
   async deleteRepository(id: string): Promise<void> {
@@ -78,9 +95,11 @@ class ApiClient {
   }
 
   // Git endpoints
-  async getBranches(gitUrl: string): Promise<Branch[]> {
-    const params = new URLSearchParams({ url: gitUrl });
-    return this.request<Branch[]>(`/git/branches?${params}`);
+  async getBranches(gitUrl: string): Promise<BranchesResponse> {
+    return this.request<BranchesResponse>("/git/branches", {
+      method: "POST",
+      body: JSON.stringify({ url: gitUrl }),
+    });
   }
 
   // Chat endpoint
