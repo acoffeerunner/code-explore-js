@@ -7,7 +7,7 @@ import { Button } from "@/components/ui";
 interface Repository {
   id: string;
   name: string;
-  status: "pending" | "cloning" | "indexing" | "indexed" | "failed";
+  status: "pending" | "cloning" | "indexing" | "ready" | "failed";
   lastIndexed?: string;
 }
 
@@ -24,7 +24,7 @@ export default function Sidebar({
 
   const getStatusIcon = (status: Repository["status"]) => {
     switch (status) {
-      case "indexed":
+      case "ready":
         return "code";
       case "indexing":
         return "sync";
@@ -41,8 +41,8 @@ export default function Sidebar({
 
   const getStatusText = (repo: Repository) => {
     switch (repo.status) {
-      case "indexed":
-        return repo.lastIndexed ? `Indexed ${repo.lastIndexed}` : "Indexed";
+      case "ready":
+        return repo.lastIndexed ? `Ready ${repo.lastIndexed}` : "Ready";
       case "indexing":
         return "Indexing...";
       case "cloning":
