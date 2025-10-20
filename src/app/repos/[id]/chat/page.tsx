@@ -111,7 +111,10 @@ export default function ChatPage() {
     try {
       await api.deleteRepository(repoId);
       setShowDeleteConfirm(false);
-      router.push("/dashboard");
+      // Brief delay for dialog close animation before redirect
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 150);
     } catch (err) {
       console.error("Failed to delete:", err);
       setIsDeleting(false);
