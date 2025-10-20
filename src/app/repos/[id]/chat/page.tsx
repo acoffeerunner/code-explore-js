@@ -6,12 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useChat } from "@/hooks/useChat";
 import { api } from "@/lib/api";
 import { Sidebar } from "@/components/layout";
-import { Badge, Button } from "@/components/ui";
+import { Badge, Button, ConfirmDialog } from "@/components/ui";
 import {
   ChatMessage,
   ChatInput,
   ThinkingIndicator,
 } from "@/components/chat";
+import { RepoInfoPanel } from "@/components/repo";
 import type { Repository } from "@/types";
 
 export default function ChatPage() {
@@ -23,6 +24,10 @@ export default function ChatPage() {
   const [repository, setRepository] = useState<Repository | null>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isReindexing, setIsReindexing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { messages, isLoading, error, sendMessage } = useChat({ repoId });
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -79,6 +84,37 @@ export default function ChatPage() {
       console.error("Failed to load data:", err);
     } finally {
       setIsPageLoading(false);
+    }
+  };
+
+  const handleViewSource = () => {
+    if (repository?.url) {
+      window.open(repository.url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleReindex = async () => {
+    if (!repository) return;
+    setIsReindexing(true);
+    try {
+      const updated = await api.reindexRepository(repoId, true);
+      setRepository(updated);
+    } catch (err) {
+      console.error("Failed to reindex:", err);
+    } finally {
+      setIsReindexing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await api.deleteRepository(repoId);
+      setShowDeleteConfirm(false);
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Failed to delete:", err);
+      setIsDeleting(false);
     }
   };
 
@@ -147,6 +183,7 @@ export default function ChatPage() {
               variant="secondary"
               size="sm"
               className="hidden md:flex"
+              onClick={handleViewSource}
               icon={
                 <span className="material-symbols-outlined text-[18px]">
                   code
@@ -158,6 +195,9 @@ export default function ChatPage() {
             <Button
               variant="secondary"
               size="sm"
+              onClick={handleReindex}
+              isLoading={isReindexing}
+              disabled={isProcessing}
               icon={
                 <span className="material-symbols-outlined text-[18px]">
                   refresh
@@ -167,14 +207,24 @@ export default function ChatPage() {
               <span className="hidden lg:inline">Re-index</span>
             </Button>
             <div className="h-9 w-[1px] bg-border-dark mx-1" />
-            <Button variant="secondary" size="sm" className="!px-2">
-              <span className="material-symbols-outlined text-[20px]">
-                share
-              </span>
-            </Button>
-            <Button variant="secondary" size="sm" className="!px-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="!px-2"
+              onClick={() => setShowInfoPanel(true)}
+            >
               <span className="material-symbols-outlined text-[20px]">
                 info
+              </span>
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="!px-2 hover:!bg-red-500/20 hover:!border-red-500/50 hover:!text-red-400"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                delete
               </span>
             </Button>
           </div>
@@ -298,6 +348,28 @@ export default function ChatPage() {
         {/* Fixed Input Area - only show when ready */}
         {isReady && <ChatInput onSend={sendMessage} isLoading={isLoading} />}
       </main>
+
+      {/* Info Panel Modal */}
+      {repository && (
+        <RepoInfoPanel
+          isOpen={showInfoPanel}
+          onClose={() => setShowInfoPanel(false)}
+          repository={repository}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Delete Repository"
+        message={`Are you sure you want to delete "${repository?.name || 'this repository'}"? This will permanently remove all indexed data and cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
