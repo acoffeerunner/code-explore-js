@@ -94,6 +94,17 @@ class ApiClient {
     });
   }
 
+  async reindexRepository(id: string, force: boolean = false): Promise<Repository> {
+    const repo = await this.request<Repository>(`/repos/${id}/reindex`, {
+      method: "POST",
+      body: JSON.stringify({ force }),
+    });
+    return {
+      ...repo,
+      name: extractRepoName(repo.url),
+    };
+  }
+
   // Git endpoints
   async getBranches(gitUrl: string): Promise<BranchesResponse> {
     return this.request<BranchesResponse>("/git/branches", {
