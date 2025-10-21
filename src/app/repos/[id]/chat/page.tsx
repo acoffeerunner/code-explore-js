@@ -29,7 +29,7 @@ export default function ChatPage() {
   const [isReindexing, setIsReindexing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { messages, isLoading, error, sendMessage } = useChat({ repoId });
+  const { messages, isLoading, isLoadingHistory, error, sendMessage } = useChat({ repoId });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -297,7 +297,13 @@ export default function ChatPage() {
           {/* Ready State - Chat Interface */}
           {isReady && (
             <>
-              {messages.length === 0 ? (
+              {isLoadingHistory ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <span className="material-symbols-outlined animate-spin text-primary text-4xl">
+                    progress_activity
+                  </span>
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center max-w-md">
                     <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">

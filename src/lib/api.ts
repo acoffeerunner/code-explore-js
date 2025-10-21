@@ -6,6 +6,7 @@ import type {
   CreateRepoResponse,
   ChatRequest,
   ChatResponse,
+  ChatHistoryResponse,
   ApiError,
 } from "@/types";
 
@@ -113,11 +114,21 @@ class ApiClient {
     });
   }
 
-  // Chat endpoint
+  // Chat endpoints
   async chat(data: ChatRequest): Promise<ChatResponse> {
     return this.request<ChatResponse>("/chat", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  }
+
+  async getChatHistory(repoId: string, limit: number = 100, offset: number = 0): Promise<ChatHistoryResponse> {
+    return this.request<ChatHistoryResponse>(`/chat/history/${repoId}?limit=${limit}&offset=${offset}`);
+  }
+
+  async clearChatHistory(repoId: string): Promise<void> {
+    return this.request<void>(`/chat/history/${repoId}`, {
+      method: "DELETE",
     });
   }
 

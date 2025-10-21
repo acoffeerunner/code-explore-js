@@ -75,6 +75,20 @@ export interface ChatMessage {
   sources?: DisplaySource[];
 }
 
+// Backend chat message response (before mapping sources)
+export interface ChatMessageResponse {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  sources: SourceCitation[] | null;
+  created_at: string;
+}
+
+export interface ChatHistoryResponse {
+  messages: ChatMessageResponse[];
+  total: number;
+}
+
 // API request/response types
 export interface CreateRepoRequest {
   url: string;
