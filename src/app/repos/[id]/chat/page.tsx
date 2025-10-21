@@ -29,7 +29,10 @@ export default function ChatPage() {
   const [isReindexing, setIsReindexing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { messages, isLoading, isLoadingHistory, error, sendMessage } = useChat({ repoId });
+  const { messages, isLoading, isLoadingHistory, error, sendMessage } = useChat({
+    repoId,
+    enabled: !!user // Wait for auth before loading history
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -346,8 +349,8 @@ export default function ChatPage() {
                     </div>
                   )}
 
-                  {/* Spacer for bottom input */}
-                  <div className="h-24" ref={messagesEndRef} />
+                  {/* Spacer for bottom input - needs to be tall enough to clear the fixed input */}
+                  <div className="h-32" ref={messagesEndRef} />
                 </>
               )}
             </>

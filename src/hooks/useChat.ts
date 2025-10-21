@@ -6,6 +6,7 @@ import type { ChatMessage, DisplaySource, SourceCitation } from "@/types";
 
 interface UseChatOptions {
   repoId: string;
+  enabled?: boolean; // Wait for auth before loading history
 }
 
 // Helper to map backend sources to display format
@@ -20,14 +21,16 @@ function mapSourcesToDisplay(sources: SourceCitation[] | null): DisplaySource[] 
   }));
 }
 
-export function useChat({ repoId }: UseChatOptions) {
+export function useChat({ repoId, enabled = true }: UseChatOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load chat history on mount
+  // Load chat history when enabled (after auth is ready)
   useEffect(() => {
+    if (!enabled) return;
+
     let isMounted = true;
 
     async function loadHistory() {
@@ -58,7 +61,7 @@ export function useChat({ repoId }: UseChatOptions) {
     return () => {
       isMounted = false;
     };
-  }, [repoId]);
+  }, [repoId, enabled]);
 
   const sendMessage = useCallback(
     async (content: string) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ChatMessage as ChatMessageType, DisplaySource } from "@/types";
 import CodeBlock from "./CodeBlock";
 
@@ -7,37 +8,73 @@ interface ChatMessageProps {
   message: ChatMessageType;
 }
 
-// Citation badge component
-function CitationBadge({ number, text }: { number: string; text: string }) {
+// Simple superscript citation - just the number
+function CitationNumber({ number, text }: { number: string; text: string }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 mx-0.5 rounded-md bg-primary/20 border border-primary/30 text-primary text-sm font-medium hover:bg-primary/30 transition-colors cursor-default"
+    <sup
+      className="inline-flex items-center justify-center ml-0.5 px-1 py-0.5 rounded bg-primary/20 text-primary text-[10px] font-bold cursor-help hover:bg-primary/30 transition-colors"
       title={text}
     >
-      <span className="material-symbols-outlined text-[14px]">description</span>
-      <span className="max-w-[200px] truncate">{text}</span>
-      <span className="text-xs opacity-70">[{number}]</span>
+      {number}
+    </sup>
+  );
+}
+
+// Source item component - compact inline chip
+function SourceItem({ source, index }: { source: DisplaySource; index: number }) {
+  // Extract just the filename from the path
+  const fileName = source.file_path.split('/').pop() || source.file_path;
+
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-surface-dark/50 border border-border-dark hover:border-primary/30 transition-colors text-xs whitespace-nowrap"
+      title={source.file_path}
+    >
+      <span className="inline-flex items-center justify-center h-4 w-4 rounded bg-primary/20 text-primary text-[10px] font-bold">
+        {index + 1}
+      </span>
+      <span className="text-text-muted">{fileName}</span>
+      <span className="text-text-muted/60">
+        L{source.start_line}-{source.end_line}
+      </span>
     </span>
   );
 }
 
-// Source item component
-function SourceItem({ source, index }: { source: DisplaySource; index: number }) {
+// Collapsible sources section
+function SourcesSection({ sources }: { sources: DisplaySource[] }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const previewCount = 3;
+  const hasMore = sources.length > previewCount;
+
+  const displayedSources = isExpanded ? sources : sources.slice(0, previewCount);
+
   return (
-    <div className="flex items-start gap-2 p-2 rounded-lg bg-surface-dark/50 border border-border-dark hover:border-primary/30 transition-colors">
-      <span className="flex items-center justify-center h-5 w-5 rounded bg-primary/20 text-primary text-xs font-bold shrink-0">
-        {index + 1}
-      </span>
-      <div className="flex flex-col min-w-0">
-        <span className="text-sm text-white font-medium truncate">
-          {source.file_path}
+    <div className="mt-3 pt-3 border-t border-border-dark/50">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center gap-2 text-text-muted hover:text-white transition-colors mb-2"
+      >
+        <span className="material-symbols-outlined text-[14px]">
+          {isExpanded ? "expand_less" : "expand_more"}
         </span>
-        <span className="text-xs text-text-muted">
-          Lines {source.start_line}–{source.end_line}
-          {source.symbol_name && (
-            <span className="ml-2 text-primary">({source.symbol_name})</span>
-          )}
+        <span className="text-xs font-medium">
+          {sources.length} source{sources.length !== 1 ? "s" : ""}
         </span>
+      </button>
+
+      <div className="flex flex-wrap gap-1.5">
+        {displayedSources.map((source, index) => (
+          <SourceItem key={index} source={source} index={index} />
+        ))}
+        {!isExpanded && hasMore && (
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="px-2 py-1.5 rounded bg-surface-dark/50 border border-border-dark text-text-muted text-xs hover:text-white hover:border-primary/30 transition-colors"
+          >
+            +{sources.length - previewCount} more
+          </button>
+        )}
       </div>
     </div>
   );
@@ -46,7 +83,7 @@ function SourceItem({ source, index }: { source: DisplaySource; index: number })
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
 
-  // Parse citations in format [text][number] and render as badges
+  // Parse citations in format [text][number] or [number] and render as superscript numbers
   const renderTextWithCitations = (text: string) => {
     // Match patterns like [filename lines X-Y][N] or just [N]
     const citationRegex = /\[([^\]]+)\]\[(\d+)\]|\[(\d+)\]/g;
@@ -61,19 +98,14 @@ export default function ChatMessage({ message }: ChatMessageProps) {
       }
 
       if (match[1] && match[2]) {
-        // Full citation: [text][number]
+        // Full citation: [text][number] - show just the number, text in tooltip
         parts.push(
-          <CitationBadge key={match.index} text={match[1]} number={match[2]} />
+          <CitationNumber key={match.index} text={match[1]} number={match[2]} />
         );
       } else if (match[3]) {
         // Simple citation: [number]
         parts.push(
-          <span
-            key={match.index}
-            className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded bg-primary/20 text-primary text-xs font-bold"
-          >
-            {match[3]}
-          </span>
+          <CitationNumber key={match.index} text={`Source ${match[3]}`} number={match[3]} />
         );
       }
 
@@ -160,23 +192,9 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           {renderContent(message.content)}
         </div>
 
-        {/* Sources list */}
+        {/* Collapsible Sources list */}
         {hasSources && (
-          <div className="mt-4 pt-4 border-t border-border-dark">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="material-symbols-outlined text-text-muted text-[16px]">
-                source
-              </span>
-              <span className="text-sm font-medium text-text-muted">
-                Sources ({message.sources!.length})
-              </span>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {message.sources!.map((source, index) => (
-                <SourceItem key={index} source={source} index={index} />
-              ))}
-            </div>
-          </div>
+          <SourcesSection sources={message.sources!} />
         )}
       </div>
     </div>
