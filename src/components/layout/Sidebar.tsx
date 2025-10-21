@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Repository {
   id: string;
@@ -21,6 +23,51 @@ export default function Sidebar({
   currentRepoId,
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showUserMenu]);
+
+  // Get user display info
+  const getUserInfo = () => {
+    if (!user) return { name: null, email: null, avatar: null, provider: null };
+
+    const provider = user.app_metadata?.provider as string | undefined;
+    const metadata = user.user_metadata || {};
+
+    return {
+      name: metadata.full_name || metadata.name || null,
+      email: user.email || null,
+      avatar: metadata.avatar_url || null,
+      provider: provider && provider !== "email" ? provider : null,
+    };
+  };
+
+  const userInfo = getUserInfo();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setShowUserMenu(false);
+      router.push("/auth");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
+  };
 
   const getStatusIcon = (status: Repository["status"]) => {
     switch (status) {
@@ -184,13 +231,69 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* Sidebar Footer */}
-      <div className="p-4 border-t border-border-dark flex flex-col gap-1">
-        <div className="mt-4 flex items-center gap-3 px-2">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-blue-500 ring-2 ring-surface-dark" />
-          <div className="flex flex-col">
-            <span className="text-white text-sm font-medium">User</span>
-          </div>
+      {/* Sidebar Footer - User Menu */}
+      <div className="p-4 border-t border-border-dark" ref={menuRef}>
+        <div className="relative">
+          {/* User Button */}
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-surface-dark transition-colors"
+          >
+            {/* Avatar */}
+            {userInfo.avatar ? (
+              <img
+                src={userInfo.avatar}
+                alt="User avatar"
+                className="h-8 w-8 rounded-full ring-2 ring-surface-dark object-cover"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-blue-500 ring-2 ring-surface-dark flex items-center justify-center text-white text-sm font-bold">
+                {(userInfo.name?.[0] || userInfo.email?.[0] || "U").toUpperCase()}
+              </div>
+            )}
+
+            {/* User Info */}
+            <div className="flex flex-col flex-1 min-w-0 text-left">
+              {userInfo.name ? (
+                <>
+                  <span className="text-white text-sm font-medium truncate">
+                    {userInfo.name}
+                  </span>
+                  {userInfo.provider && (
+                    <span className="text-text-muted text-xs capitalize">
+                      via {userInfo.provider}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-white text-sm font-medium truncate">
+                  {userInfo.email || "User"}
+                </span>
+              )}
+            </div>
+
+            {/* Chevron */}
+            <span className="material-symbols-outlined text-text-muted text-[18px]">
+              {showUserMenu ? "expand_less" : "expand_more"}
+            </span>
+          </button>
+
+          {/* Dropdown Menu */}
+          {showUserMenu && (
+            <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface-dark border border-border-dark rounded-lg shadow-xl overflow-hidden">
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-red-500/10 transition-colors group"
+              >
+                <span className="material-symbols-outlined text-text-muted group-hover:text-red-400 text-[20px]">
+                  logout
+                </span>
+                <span className="text-text-muted group-hover:text-red-400 text-sm font-medium">
+                  Sign out
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </aside>
