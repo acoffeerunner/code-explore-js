@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
@@ -8,7 +8,7 @@ import { Sidebar } from "@/components/layout";
 import { BranchList } from "@/components/repo";
 import type { Repository, Branch } from "@/types";
 
-export default function BranchSelectionPage() {
+function BranchSelectionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const gitUrl = searchParams.get("url");
@@ -156,5 +156,21 @@ export default function BranchSelectionPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function BranchSelectionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background-dark flex items-center justify-center">
+          <span className="material-symbols-outlined animate-spin text-primary text-4xl">
+            progress_activity
+          </span>
+        </div>
+      }
+    >
+      <BranchSelectionContent />
+    </Suspense>
   );
 }
