@@ -23,30 +23,28 @@ export function useAuth() {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // Set token BEFORE updating state to avoid race conditions
+      api.setToken(session?.access_token ?? null);
+
       setState({
         user: session?.user ?? null,
         session,
         loading: false,
       });
-
-      // Set token for API client
-      if (session?.access_token) {
-        api.setToken(session.access_token);
-      }
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Set token BEFORE updating state to avoid race conditions
+      api.setToken(session?.access_token ?? null);
+
       setState({
         user: session?.user ?? null,
         session,
         loading: false,
       });
-
-      // Update API client token
-      api.setToken(session?.access_token ?? null);
     });
 
     return () => subscription.unsubscribe();
