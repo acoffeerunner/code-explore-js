@@ -7,6 +7,7 @@ import type {
   ChatRequest,
   ChatResponse,
   ChatHistoryResponse,
+  SourceCitation,
   ApiError,
 } from "@/types";
 
@@ -120,6 +121,59 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(data),
     });
+  }
+
+  async *chatStream(data: ChatRequest): AsyncGenerator<
+    | { event: "token"; content: string }
+    | { event: "done"; sources: SourceCitation[]; model: string }
+    | { event: "error"; error: string }
+  > {
+    const headers: HeadersInit = { "Content-Type": "application/json" };
+    if (this.token) {
+      (headers as Record<string, string>)["Authorization"] =
+        `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/chat/stream`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Stream failed" }));
+      throw new Error(error.detail);
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      let currentEvent = "";
+      for (const line of lines) {
+        if (line.startsWith("event: ")) {
+          currentEvent = line.slice(7);
+        } else if (line.startsWith("data: ") && currentEvent) {
+          const data = JSON.parse(line.slice(6));
+          if (currentEvent === "token") {
+            yield { event: "token", content: data.content };
+          } else if (currentEvent === "done") {
+            yield { event: "done", sources: data.sources, model: data.model };
+          } else if (currentEvent === "error") {
+            yield { event: "error", error: data.error };
+          }
+          currentEvent = "";
+        }
+      }
+    }
   }
 
   async getChatHistory(repoId: string, limit: number = 100, offset: number = 0): Promise<ChatHistoryResponse> {

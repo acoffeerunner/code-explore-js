@@ -104,6 +104,7 @@ export interface ChatRequest {
   question: string;
   model?: string;
   top_k?: number;
+  history?: Array<{ role: string; content: string }>;
 }
 
 // Backend ChatResponse structure

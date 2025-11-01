@@ -80,30 +80,56 @@ export function useChat({ repoId, enabled = true }: UseChatOptions) {
 
       setMessages((prev) => [...prev, userMessage]);
 
+      // Build history from recent messages
+      const recentHistory = messages.slice(-10).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      // Create placeholder assistant message for streaming
+      const assistantId = crypto.randomUUID();
+      const assistantMessage: ChatMessage = {
+        id: assistantId,
+        role: "assistant",
+        content: "",
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+
       try {
-        const response = await api.chat({
+        for await (const event of api.chatStream({
           question: content.trim(),
           repo_id: repoId,
-        });
-
-        // Add assistant response (backend now persists both messages)
-        const assistantMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: response.answer,
-          created_at: new Date().toISOString(),
-          sources: mapSourcesToDisplay(response.sources),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
+          history: recentHistory,
+        })) {
+          if (event.event === "token") {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, content: m.content + event.content }
+                  : m
+              )
+            );
+          } else if (event.event === "done") {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, sources: mapSourcesToDisplay(event.sources) }
+                  : m
+              )
+            );
+          } else if (event.event === "error") {
+            throw new Error(event.error);
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to send message");
-        // Remove the user message on error
-        setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
+        setMessages((prev) => prev.filter((m) => m.id !== userMessage.id && m.id !== assistantId));
       } finally {
         setIsLoading(false);
       }
     },
-    [repoId]
+    [repoId, messages]
   );
 
   const clearMessages = useCallback(async () => {
