@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Screen mockups (do not commit)
 screens/
+
+# Verification harness scratch + evidence (.claude/skills/verify)
+.verify/

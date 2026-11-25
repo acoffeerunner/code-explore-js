@@ -1,0 +1,9 @@
+{
+  "name": "codeexplore-verify",
+  "private": true,
+  "description": "Verification harness deps (kept out of the app's package.json)",
+  "type": "module",
+  "dependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}
